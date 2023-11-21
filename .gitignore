@@ -2,3 +2,9 @@
 /build/
 /.idea/
 
+# Ignore sim files
+/networktables.json
+/simgui.json
+/simgui-ds.json
+/simgui-window.json
+

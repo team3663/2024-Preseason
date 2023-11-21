@@ -3,10 +3,13 @@ package com.cpr3663.p2024;
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
+import org.littletonrobotics.junction.LoggedRobot;
+import org.littletonrobotics.junction.Logger;
+import org.littletonrobotics.junction.networktables.NT4Publisher;
+import org.littletonrobotics.junction.wpilog.WPILOGWriter;
 
-public class Robot extends TimedRobot {
+public class Robot extends LoggedRobot {
     private SwerveModule frontLeftModule =
             new SwerveModule(new TalonFX(5, "3663"),
                     new CANcoder(9, "3663"),
@@ -30,6 +33,17 @@ public class Robot extends TimedRobot {
 
     @Override
     public void robotInit() {
+        // Initialize AdvantageKit
+        // Always publish data to NetworkTables
+        Logger.getInstance().addDataReceiver(new NT4Publisher());
+        Logger.getInstance().disableDeterministicTimestamps();
+        if (isReal()) {
+            // When on robot, log to a USB stick
+            Logger.getInstance().addDataReceiver(new WPILOGWriter("/media/sda1/"));
+        }
+        // Start AdvantageKit
+        Logger.getInstance().start();
+
         var tab = Shuffleboard.getTab("TEST");
         tab.addDouble("TargetAngle", () -> targetAngle);
 
