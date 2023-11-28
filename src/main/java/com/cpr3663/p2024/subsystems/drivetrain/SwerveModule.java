@@ -1,16 +1,16 @@
-package com.cpr3663.p2024;
+package com.cpr3663.p2024.subsystems.drivetrain;
 
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.PositionVoltage;
-import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.FeedbackSensorSourceValue;
+import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.util.Units;
 
-public class SwerveModule {
+public class SwerveModule implements SwerveModuleIO {
     private TalonFX driveMotor;
     private TalonFX steerMotor;
     private CANcoder steerEncoder;
@@ -33,19 +33,27 @@ public class SwerveModule {
 
         steerConfig.Slot0.kP = 100;
         steerConfig.Slot0.kD = 1;
-//
-//        steerConfig.Voltage.PeakForwardVoltage = 6.0;
-//        steerConfig.Voltage.PeakReverseVoltage = 6.0;
 
         steerMotor.getConfigurator().apply(steerConfig);
     }
 
-    public void setSteerVoltage(double volts) {
-        steerMotor.setControl(new VoltageOut(volts));
+    @Override
+    public void updateInputs(Inputs inputs) {
+        StatusSignal<Double> steerAngleSignal = steerMotor.getPosition();
+
+        steerAngleSignal.refresh();
+
+        StatusSignal<Double> encoderAngleSignal = steerEncoder.getPosition();
+
+        encoderAngleSignal.refresh();
+
+        inputs.steerAngleRad = Units.rotationsToRadians(steerAngleSignal.getValue());
+        inputs.encoderAngleRad = Units.rotationsToRadians(encoderAngleSignal.getValue());
     }
 
-    public void setSteerAngle(double angle) {
-        steerMotor.setControl(new PositionVoltage(Units.radiansToRotations(angle)));
+    @Override
+    public void setTargetState(SwerveModuleState state) {
+        steerMotor.setControl(new PositionVoltage(state.angle.getRotations()));
     }
 
     public double getSteerAngle() {
